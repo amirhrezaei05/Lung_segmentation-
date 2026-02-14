@@ -1,0 +1,73 @@
+# EfficientNet-UNet configuration (Primary model)
+
+_base_: base_config.yaml
+
+experiment:
+  name: "efficient_unet"
+  description: "EfficientNet-B4 based UNet - primary model with best parameter efficiency"
+
+model:
+  name: "EfficientUNet"
+  architecture: "efficient_unet"
+  
+  # Encoder settings
+  encoder:
+    backbone: "efficientnet_b4"
+    pretrained: true
+    in_channels: 1
+    # EfficientNet-B4 feature channels at different scales:
+    # [32, 56, 112, 160, 448] from indices [1, 2, 3, 4, -1]
+    
+  # Decoder settings
+  decoder:
+    channels: [512, 256, 128, 64, 64]  # Bottleneck and decoder channels
+    skip_connections: [160, 112, 56, 32]  # Matching encoder features
+    use_residual: true
+    dropout: 0.2
+    upsample_mode: "transpose"  # transpose or bilinear
+    
+  # Output settings
+  output:
+    out_channels: 1
+    activation: null
+    final_upsampling: 2  # Additional upsampling stages if needed
+
+training:
+  batch_size: 16
+  epochs: 50
+  gradient_accumulation_steps: 1
+  mixed_precision: true
+  
+  optimizer:
+    type: "adam"
+    learning_rate: 0.0002
+    weight_decay: 0.0001
+    betas: [0.9, 0.999]
+    
+  scheduler:
+    type: "cosine"
+    warmup_epochs: 5
+    min_lr: 1.0e-6
+    
+  early_stopping:
+    enabled: true
+    patience: 15
+    min_delta: 0.0005
+
+loss:
+  type: "combined"
+  dice_weight: 0.7
+  bce_weight: 0.3
+  smooth: 1.0e-6
+
+# EfficientNet-specific data augmentation
+data:
+  augmentation:
+    enabled: true
+    horizontal_flip: 0.5
+    rotation_limit: 15
+    brightness_limit: 0.2
+    contrast_limit: 0.2
+    elastic_transform: true
+    grid_distortion: false
+    optical_distortion: false

@@ -1,0 +1,107 @@
+# Base configuration for lung segmentation project
+# This file contains shared settings across all experiments
+
+experiment:
+  name: "lung_segmentation"
+  seed: 42
+  device: "cuda"  # cuda, cpu, or mps (for Apple Silicon)
+  
+data:
+  dataset_path: "data/raw"
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  image_size: [224, 224]
+  num_workers: 4
+  pin_memory: true
+  
+  # Data augmentation
+  augmentation:
+    enabled: true
+    horizontal_flip: 0.5
+    rotation_limit: 15
+    brightness_limit: 0.2
+    contrast_limit: 0.2
+    
+  # Preprocessing
+  preprocessing:
+    clahe:
+      enabled: true
+      clip_limit: 2.0
+      tile_grid_size: [8, 8]
+    unsharp_masking:
+      enabled: true
+      kernel_size: 9
+      sigma: 10.0
+      alpha: 1.5
+      beta: -0.5
+    gamma_correction:
+      enabled: true
+      gamma: 1.2
+    normalization:
+      mean: [0.485]  # ImageNet mean for grayscale
+      std: [0.229]   # ImageNet std for grayscale
+
+training:
+  batch_size: 16
+  epochs: 50
+  gradient_accumulation_steps: 1
+  mixed_precision: true  # Use AMP for faster training
+  
+  # Optimization
+  optimizer:
+    type: "adam"  # adam, adamw, sgd
+    learning_rate: 0.0002
+    weight_decay: 0.0001
+    betas: [0.9, 0.999]
+    
+  # Learning rate scheduler
+  scheduler:
+    type: "cosine"  # cosine, step, plateau, onecycle
+    warmup_epochs: 5
+    min_lr: 1.0e-6
+    
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+    
+  # Gradient clipping
+  gradient_clipping:
+    enabled: true
+    max_norm: 1.0
+
+loss:
+  type: "combined"  # dice, bce, focal, combined
+  dice_weight: 0.7
+  bce_weight: 0.3
+  smooth: 1.0e-6
+
+validation:
+  frequency: 1  # Validate every N epochs
+  save_predictions: true
+  save_best_only: true
+  metric: "dice"  # Metric to track for best model
+  
+logging:
+  use_mlflow: false
+  use_tensorboard: false
+  log_interval: 10  # Log every N batches
+  save_interval: 5  # Save checkpoint every N epochs
+  
+  mlflow:
+    tracking_uri: "mlruns"
+    experiment_name: "lung_segmentation"
+    
+evaluation:
+  metrics:
+    - dice
+    - iou
+    - precision
+    - recall
+    - accuracy
+    - hausdorff_distance
+  save_visualizations: true
+  num_visualizations: 10
+  threshold: 0.5  # Probability threshold for binary mask

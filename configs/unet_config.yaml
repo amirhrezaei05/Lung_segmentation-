@@ -1,0 +1,43 @@
+# Standard UNet baseline configuration
+
+# Inherit from base config
+_base_: base_config.yaml
+
+experiment:
+  name: "baseline_unet"
+  description: "Standard UNet without pretrained encoder - baseline model"
+
+model:
+  name: "UNet"
+  architecture: "standard_unet"
+  
+  # Encoder settings
+  encoder:
+    in_channels: 1
+    base_channels: 64
+    depth: 4
+    
+  # Decoder settings
+  decoder:
+    use_attention: false
+    dropout: 0.2
+    
+  # Output settings
+  output:
+    out_channels: 1
+    activation: null  # Logits output, sigmoid applied in loss
+
+training:
+  batch_size: 16
+  epochs: 50
+  
+  optimizer:
+    learning_rate: 0.001
+    
+  # UNet typically needs more regularization without pretrained weights
+  weight_decay: 0.0001
+
+loss:
+  type: "combined"
+  dice_weight: 0.7
+  bce_weight: 0.3
