@@ -291,10 +291,6 @@ experiments/
 
 *Results to be populated after training*
 
-### Key Findings
-- [To be filled after experiments]
-- Statistical significance: p < 0.05
-- Best performance-parameter trade-off: EfficientNet-UNet
 
 ### Failure Cases
 - **Low contrast images**: Performance degrades when lung boundaries unclear
@@ -336,47 +332,7 @@ loss:
   weights: [0.7, 0.3]
 ```
 
-## 📝 Next Steps
 
-1. **Data Collection**
-   - Expand dataset to 5000+ images
-   - Multi-center data for robustness
-   - Include diverse pathologies
 
-2. **Model Improvements**
-   - Attention mechanisms (CBAM, SE blocks)
-   - Multi-scale training
-   - Ensemble methods
 
-3. **Deployment**
-   - ONNX export for inference
-   - REST API for integration
-   - Docker containerization
-   - Cloud deployment (AWS/GCP)
 
-4. **Clinical Validation**
-   - Radiologist evaluation
-   - Clinical workflow integration
-   - Performance on edge cases
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/improvement`)
-3. Commit changes (`git commit -am 'Add feature'`)
-4. Push to branch (`git push origin feature/improvement`)
-5. Create Pull Request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 📧 Contact
-
-For questions or collaboration: [your.email@example.com]
-
-## 🙏 Acknowledgments
-
-- Dataset: Nikhil Pandey (Kaggle)
-- EfficientNet: Tan & Le (2019)
-- U-Net: Ronneberger et al. (2015)
