@@ -177,32 +177,101 @@ def prepare_data_paths(
     Returns:
         Tuple of (image_paths, mask_paths)
     """
-    image_dir = Path(data_dir) / image_subdir
-    mask_dir = Path(data_dir) / mask_subdir
+    data_dir = Path(data_dir)
+    image_dir = data_dir / image_subdir
+    mask_dir = data_dir / mask_subdir
     
+    # Check if directories exist
     if not image_dir.exists():
-        raise FileNotFoundError(f"Image directory not found: {image_dir}")
+        print(f"\n❌ ERROR: Image directory not found!")
+        print(f"   Looking for: {image_dir.absolute()}")
+        print(f"\n💡 Please ensure your data is structured as:")
+        print(f"   {data_dir.absolute()}/")
+        print(f"   ├── {image_subdir}/     <- X-ray images (.png files)")
+        print(f"   └── {mask_subdir}/      <- Mask images (.png files)")
+        raise FileNotFoundError(f"Image directory not found: {image_dir.absolute()}")
+    
     if not mask_dir.exists():
-        raise FileNotFoundError(f"Mask directory not found: {mask_dir}")
+        print(f"\n❌ ERROR: Mask directory not found!")
+        print(f"   Looking for: {mask_dir.absolute()}")
+        raise FileNotFoundError(f"Mask directory not found: {mask_dir.absolute()}")
     
     # Get all image files
     image_paths = sorted(list(image_dir.glob("*.png")))
+    
+    if len(image_paths) == 0:
+        print(f"\n❌ ERROR: No PNG images found in {image_dir.absolute()}")
+        print(f"\n💡 Make sure you have .png files in the CXR_png folder")
+        print(f"   Current directory contents:")
+        try:
+            for item in image_dir.iterdir():
+                print(f"     - {item.name}")
+        except:
+            print(f"     (Unable to list directory)")
+        raise ValueError(f"No images found in {image_dir.absolute()}")
+    
+    # Get all mask files
+    mask_files = sorted(list(mask_dir.glob("*.png")))
+    
+    if len(mask_files) == 0:
+        print(f"\n❌ ERROR: No PNG masks found in {mask_dir.absolute()}")
+        raise ValueError(f"No masks found in {mask_dir.absolute()}")
+    
+    print(f"\n✓ Found {len(image_paths)} images in {image_dir.name}/")
+    print(f"✓ Found {len(mask_files)} masks in {mask_dir.name}/")
+    print(f"\nMatching images with masks...")
     
     # Find matching masks
     mask_paths = []
     matched_image_paths = []
     
     for img_path in image_paths:
-        # Look for mask with matching stem
-        potential_masks = list(mask_dir.glob(f"*{img_path.stem}*.png"))
-        
-        if potential_masks:
-            mask_paths.append(potential_masks[0])
+        # Look for mask with matching stem (filename without extension)
+        # Try exact match first
+        exact_match = mask_dir / f"{img_path.stem}.png"
+        if exact_match.exists():
+            mask_paths.append(exact_match)
             matched_image_paths.append(img_path)
+        else:
+            # Try common naming patterns: _mask, _seg, etc.
+            patterns = [
+                f"{img_path.stem}_mask.png",
+                f"{img_path.stem}_seg.png",
+                f"{img_path.stem}_label.png",
+                f"mask_{img_path.stem}.png",
+            ]
+            
+            found = False
+            for pattern in patterns:
+                potential_match = mask_dir / pattern
+                if potential_match.exists():
+                    mask_paths.append(potential_match)
+                    matched_image_paths.append(img_path)
+                    found = True
+                    break
+            
+            # If still not found, try glob pattern matching
+            if not found:
+                potential_masks = list(mask_dir.glob(f"{img_path.stem}*.png"))
+                if potential_masks:
+                    mask_paths.append(potential_masks[0])
+                    matched_image_paths.append(img_path)
     
-    print(f"Found {len(matched_image_paths)} matched image-mask pairs")
-    print(f"  Images: {image_dir}")
-    print(f"  Masks: {mask_dir}")
+    if len(matched_image_paths) == 0:
+        print(f"\n❌ ERROR: No matching image-mask pairs found!")
+        print(f"\n💡 Possible reasons:")
+        print(f"   1. Image and mask filenames don't match")
+        print(f"   2. Files are in wrong folders")
+        print(f"\n   Example images: {[p.name for p in image_paths[:3]]}")
+        print(f"   Example masks:  {[p.name for p in mask_files[:3]]}")
+        raise ValueError("No matching image-mask pairs found")
+    
+    print(f"✓ Successfully matched {len(matched_image_paths)} image-mask pairs")
+    print(f"  Images: {image_dir.absolute()}")
+    print(f"  Masks: {mask_dir.absolute()}")
+    
+    if len(matched_image_paths) < len(image_paths):
+        print(f"\n⚠ Warning: {len(image_paths) - len(matched_image_paths)} images without matching masks")
     
     return matched_image_paths, mask_paths
 
